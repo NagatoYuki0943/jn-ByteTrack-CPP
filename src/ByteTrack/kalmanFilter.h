@@ -1,3 +1,5 @@
+#ifndef kALMANFILTER_H
+#define kALMANFILTER_H
 #pragma once
 
 #include "dataType.h"
@@ -9,17 +11,17 @@ namespace byte_kalman
 	public:
 		static const double chi2inv95[10];
 		KalmanFilter();
-		KAL_DATA initiate(const DETECTBOX& measurement);
-		void predict(KAL_MEAN& mean, KAL_COVA& covariance);
-		KAL_HDATA project(const KAL_MEAN& mean, const KAL_COVA& covariance);
-		KAL_DATA update(const KAL_MEAN& mean,
-			const KAL_COVA& covariance,
-			const DETECTBOX& measurement);
+		KAL_DATA initiate(const DETECTBOX &measurement);
+		void predict(KAL_MEAN &mean, KAL_COVA &covariance);
+		KAL_HDATA project(const KAL_MEAN &mean, const KAL_COVA &covariance);
+		KAL_DATA update(const KAL_MEAN &mean,
+						const KAL_COVA &covariance,
+						const DETECTBOX &measurement);
 
 		Eigen::Matrix<float, 1, -1> gating_distance(
-			const KAL_MEAN& mean,
-			const KAL_COVA& covariance,
-			const std::vector<DETECTBOX>& measurements,
+			const KAL_MEAN &mean,
+			const KAL_COVA &covariance,
+			const std::vector<DETECTBOX> &measurements,
 			bool only_position = false);
 
 	private:
@@ -29,3 +31,5 @@ namespace byte_kalman
 		float _std_weight_velocity;
 	};
 }
+
+#endif // kALMANFILTER_H

@@ -9,52 +9,29 @@
 
 #include "test_utils.h"
 
+std::vector<std::string> classes{
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
+    "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
+    "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
+    "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+    "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
+    "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
+    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard",
+    "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase",
+    "scissors", "teddy bear", "hair drier", "toothbrush"};
 
-bool fileExists(const std::string& path)
-{
-#ifdef _WIN32
-    DWORD attr = GetFileAttributesA(path.c_str());
-    return (attr != INVALID_FILE_ATTRIBUTES &&
-            !(attr & FILE_ATTRIBUTE_DIRECTORY));
-#else
-    std::ifstream f(path);
-    return f.good();
-#endif
-}
-
-std::string pathJoin(const std::vector<std::string>& pathSegments)
-{
-    std::string path = "";
-    std::string sep;
-#if _win32
-    sep = "\\";
-#else
-    sep = "/";
-#endif
-
-    int numSegments = pathSegments.size();
-    for (int i = 0; i < numSegments; ++i)
-    {
-        path += pathSegments[i];
-        if (i < numSegments - 1)
-        {
-            path += sep;
-        }
-    }
-
-    return path;
-}
-
-void readYoloLabelFile(const std::string& path, int imgWidth, int imgHeight, std::vector<Object>& objects) 
+void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std::vector<Object> &objects)
 {
     std::ifstream file(path);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         std::cerr << "Failed to open label file: " << path << std::endl;
         return;
     }
 
     std::string line;
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+    {
         std::istringstream ss(line);
         int class_id;
         float x_center, y_center, width, height, conf;
@@ -74,50 +51,36 @@ void readYoloLabelFile(const std::string& path, int imgWidth, int imgHeight, std
     }
 }
 
-bool hasValidExtension(const std::string& fileName, const std::vector<std::string>& validExtensions) 
+void drawTracklets(cv::Mat &image, const std::vector<STrack> &tracklets)
 {
-    for (const std::string& ext : validExtensions) {
-        if (fileName.size() >= ext.size() && 
-            fileName.compare(fileName.size() - ext.size(), ext.size(), ext) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void drawTracklets(cv::Mat& image, const std::vector<STrack>& tracklets)
-{
-    for (const STrack& tracklet : tracklets) {
+    for (const STrack &tracklet : tracklets)
+    {
         cv::Rect box(
             static_cast<int>(tracklet.tlwh[0]),
             static_cast<int>(tracklet.tlwh[1]),
             static_cast<int>(tracklet.tlwh[2]),
-            static_cast<int>(tracklet.tlwh[3])
-        );
+            static_cast<int>(tracklet.tlwh[3]));
 
         cv::Scalar color = tracklet.get_color();
 
         cv::rectangle(image,
-            box,
-            color,
-            2,
-            cv::LINE_AA,
-            false
-        );
+                      box,
+                      color,
+                      2,
+                      cv::LINE_AA,
+                      false);
 
         cv::Point2i textLocation(
             static_cast<int>(tracklet.tlwh[0]),
-            static_cast<int>(tracklet.tlwh[1]) - 5
-        );
-        cv::putText(image, 
-            "class_id: " + std::to_string(tracklet.class_id) + ", track_id: " + std::to_string(tracklet.track_id), 
-            textLocation, 
-            cv::FONT_HERSHEY_SIMPLEX, 
-            0.5, 
-            color, 
-            1,
-            cv::LINE_AA,
-            false
-        );
+            static_cast<int>(tracklet.tlwh[1]) - 5);
+        cv::putText(image,
+                    classes[tracklet.class_id] + ", track_id: " + std::to_string(tracklet.track_id),
+                    textLocation,
+                    cv::FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    color,
+                    1,
+                    cv::LINE_AA,
+                    false);
     }
 }

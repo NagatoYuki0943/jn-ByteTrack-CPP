@@ -16,7 +16,7 @@ BYTETracker::~BYTETracker()
 {
 }
 
-void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>& lost_stracks, std::vector<STrack>& output_stracks)
+void BYTETracker::update(const std::vector<Object> &objects, std::vector<STrack> &lost_stracks, std::vector<STrack> &output_stracks)
 {
 	////////////////// Step 1: Get detections //////////////////
 	this->frame_id++;
@@ -30,10 +30,10 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 	std::vector<STrack> tracked_stracks_swap;
 	std::vector<STrack> resa, resb;
 
-	std::vector<STrack*> unconfirmed;
-	std::vector<STrack*> tracked_stracks;
-	std::vector<STrack*> strack_pool;
-	std::vector<STrack*> r_tracked_stracks;
+	std::vector<STrack *> unconfirmed;
+	std::vector<STrack *> tracked_stracks;
+	std::vector<STrack *> strack_pool;
+	std::vector<STrack *> r_tracked_stracks;
 
 	if (objects.size() > 0)
 	{
@@ -50,11 +50,11 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 			int class_id = objects[i].label;
 
 			STrack strack(STrack::tlbr_to_tlwh(tlbr_), score, class_id);
-			if (score >= track_high_thresh) 
+			if (score >= track_high_thresh)
 			{
 				detections.push_back(strack);
-			} 
-			else if (score >= track_low_thresh) 
+			}
+			else if (score >= track_low_thresh)
 			{
 				detections_low.push_back(strack);
 			}
@@ -74,11 +74,11 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 	strack_pool = joint_stracks(tracked_stracks, this->lost_stracks);
 	STrack::multi_predict(strack_pool, this->kalman_filter);
 
-	std::vector<std::vector<float> > dists;
+	std::vector<std::vector<float>> dists;
 	int dist_size = 0, dist_size_size = 0;
 	dists = iou_distance(strack_pool, detections, dist_size, dist_size_size);
 
-	std::vector<std::vector<int> > matches;
+	std::vector<std::vector<int>> matches;
 	std::vector<int> u_track, u_detection;
 	linear_assignment(dists, dist_size, dist_size_size, match_thresh, matches, u_track, u_detection);
 
@@ -105,7 +105,7 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 	}
 	detections.clear();
 	detections.assign(detections_low.begin(), detections_low.end());
-	
+
 	for (int i = 0; i < u_track.size(); i++)
 	{
 		if (strack_pool[u_track[i]]->state == TrackState::Tracked)
@@ -174,13 +174,14 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 	}
 
 	////////////////// Step 4: Init new stracks //////////////////
-	for (int i = 0; i < u_detection.size(); i++) {
-        STrack *t = &detections[u_detection[i]];
-        if (t->score < new_track_thresh) 
-            continue;
-        t->activate(this->kalman_filter, this->frame_id);
-        activated_stracks.push_back(*t);
-    }
+	for (int i = 0; i < u_detection.size(); i++)
+	{
+		STrack *t = &detections[u_detection[i]];
+		if (t->score < new_track_thresh)
+			continue;
+		t->activate(this->kalman_filter, this->frame_id);
+		activated_stracks.push_back(*t);
+	}
 
 	////////////////// Step 5: Update state //////////////////
 	for (int i = 0; i < this->lost_stracks.size(); i++)
@@ -191,7 +192,7 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 			removed_stracks.push_back(this->lost_stracks[i]);
 		}
 	}
-	
+
 	for (int i = 0; i < this->tracked_stracks.size(); i++)
 	{
 		if (this->tracked_stracks[i].state == TrackState::Tracked)
@@ -205,7 +206,7 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 	this->tracked_stracks = joint_stracks(this->tracked_stracks, activated_stracks);
 	this->tracked_stracks = joint_stracks(this->tracked_stracks, refind_stracks);
 
-	//std::std::cout << activated_stracks.size() << std::std::endl;
+	// std::std::cout << activated_stracks.size() << std::std::endl;
 
 	this->lost_stracks = sub_stracks(this->lost_stracks, this->tracked_stracks);
 	for (int i = 0; i < lost_stracks.size(); i++)
@@ -218,14 +219,14 @@ void BYTETracker::update(const std::vector<Object>& objects, std::vector<STrack>
 	{
 		this->removed_stracks.push_back(removed_stracks[i]);
 	}
-	
+
 	remove_duplicate_stracks(resa, resb, this->tracked_stracks, this->lost_stracks);
 
 	this->tracked_stracks.clear();
 	this->tracked_stracks.assign(resa.begin(), resa.end());
 	this->lost_stracks.clear();
 	this->lost_stracks.assign(resb.begin(), resb.end());
-	
+
 	for (int i = 0; i < this->tracked_stracks.size(); i++)
 	{
 		output_stracks.push_back(this->tracked_stracks[i]);

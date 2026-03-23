@@ -1,10 +1,13 @@
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 #include <opencv2/opencv.hpp>
 
 #include "BYTETracker.h"
 #include "test_utils.h"
+
+namespace fs = std::filesystem;
 
 int main(int argc, char *argv[])
 {
@@ -17,9 +20,21 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    const char *video_path = argv[1];
-    const char *labels_path = argv[2];
+    const std::string video_path = argv[1];
+    const fs::path labels_path = argv[2];
     const std::string output_path = argv[3];
+
+    if (!fs::exists(video_path))
+    {
+        std::cout << "video_path: " << video_path << "not exist" << std::endl;
+        return -1;
+    }
+
+    if (!fs::exists(labels_path))
+    {
+        std::cout << "video_path: " << labels_path << "not exist" << std::endl;
+        return -1;
+    }
 
     // Initialize video capture
     cv::VideoCapture cap(video_path);
@@ -32,13 +47,8 @@ int main(int argc, char *argv[])
     long nFrame = static_cast<long>(cap.get(cv::CAP_PROP_FRAME_COUNT));
 
     // Output video writer
-    std::string output_video_path = output_path;
-    if (!hasValidExtension(output_path, {"mp4"}))
-    {
-        output_video_path = pathJoin({output_path, "output.mp4"});
-    }
     cv::VideoWriter writer(
-        output_video_path,
+        output_path,
         cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
         fps,
         cv::Size(img_w, img_h));
@@ -58,22 +68,30 @@ int main(int argc, char *argv[])
         if (!cap.read(frame))
             break;
         outputFrame = frame;
+        std::cout << "Processing frame " << frame_idx << " / " << nFrame << std::endl;
 
         // Read and process model predictions
-        std::string labelFile = pathJoin({labels_path, std::to_string(frame_idx) + ".txt"});
-        if (fileExists(labelFile))
+        fs::path labelFile = labels_path / (std::to_string(frame_idx) + ".txt");
+        if (fs::exists(labelFile))
         {
             objects.clear();
             tracklets.clear();
 
             // Read labels
-            readYoloLabelFile(labelFile, img_w, img_h, objects);
+            readYoloLabelFile(labelFile.string(), img_w, img_h, objects);
 
             // Tracking
             tracker.update(objects, lostTracklets, tracklets);
 
+            std::cout << "Tracklets: " << tracklets.size() << std::endl;
+            std::cout << "lostTracklets: " << lostTracklets.size() << std::endl;
+
             // Draw boxes
             drawTracklets(outputFrame, tracklets);
+        }
+        else
+        {
+            std::cout << "No labels for frame " << frame_idx << std::endl;
         }
 
         // Write output frame
@@ -85,8 +103,6 @@ int main(int argc, char *argv[])
     // Release video capture and writer
     cap.release();
     writer.release();
-
-    std::cout << "Terminating program" << std::endl;
 
     return 0;
 }

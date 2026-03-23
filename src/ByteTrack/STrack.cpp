@@ -8,7 +8,7 @@ STrack::STrack(std::vector<float> tlwh_, float score, int class_id)
 	is_activated = false;
 	track_id = 0;
 	state = TrackState::New;
-	
+
 	tlwh.resize(4);
 	tlbr.resize(4);
 
@@ -54,7 +54,7 @@ void STrack::activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id)
 	{
 		this->is_activated = true;
 	}
-	//this->is_activated = true;
+	// this->is_activated = true;
 	this->frame_id = frame_id;
 	this->start_frame = frame_id;
 }
@@ -180,7 +180,7 @@ int STrack::end_frame()
 	return this->frame_id;
 }
 
-void STrack::multi_predict(std::vector<STrack*> &stracks, byte_kalman::KalmanFilter &kalman_filter)
+void STrack::multi_predict(std::vector<STrack *> &stracks, byte_kalman::KalmanFilter &kalman_filter)
 {
 	for (int i = 0; i < stracks.size(); i++)
 	{
