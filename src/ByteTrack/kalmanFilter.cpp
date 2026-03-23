@@ -64,7 +64,7 @@ namespace byte_kalman
         // v_aspect_ratio    1e-5    宽高比变化率不确定性
         // std(6) = 1e-5;
         // std(6) = 0.001;
-        std(6) = 0.005;
+        std(6) = 0.0025;
         // std(6) = 0.01;
         // std(6) = 0.1 * _std_weight_velocity * measurement[3];
         // v_height    10 × w_vel × h    高度变化率不确定性

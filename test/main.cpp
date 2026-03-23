@@ -54,7 +54,22 @@ int main(int argc, char *argv[])
         cv::Size(img_w, img_h));
 
     // Initialize tracker
-    ByteTrack::BYTETracker tracker(60, 0.3, 0.1, 0.5, 0.8);
+    // max_time_lost 死亡倒计时，目标丢失（未匹配到检测框）后，在内存中保留等待重新出现的总帧数
+    int max_time_lost = 60;
+    // track_high_thresh 高分界线，得分大于此值的框为“高分框”，参与第一轮常规匹配。
+    float track_high_thresh = 0.3;
+    // track_low_thresh 低分界线，得分在此值与高分界线之间的为“低分框”，参与第二轮遮挡修补；低于此值的框直接丢弃。
+    float track_low_thresh = 0.1;
+    // new_track_thresh 出生门槛，只有得分大于此值的检测框，才能被初始化为全新的追踪目标。
+    float new_track_thresh = 0.5;
+    // match_thresh 认亲标准，判定检测框与已有轨迹“是否为同一目标”的匹配代价容忍度（通常基于 IoU）。
+    float match_thresh = 0.8;
+    ByteTrack::BYTETracker tracker(
+        max_time_lost,
+        track_high_thresh,
+        track_low_thresh,
+        new_track_thresh,
+        match_thresh);
     std::vector<ByteTrack::Object> objects;
     std::vector<ByteTrack::STrack> tracklets;
     std::vector<ByteTrack::STrack> lostTracklets;
