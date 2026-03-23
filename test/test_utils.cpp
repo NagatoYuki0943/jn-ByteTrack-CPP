@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
-#include <dirent.h>
+// #include <dirent.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -110,7 +110,7 @@ void drawTracklets(cv::Mat& image, const std::vector<STrack>& tracklets)
             static_cast<int>(tracklet.tlwh[1]) - 5
         );
         cv::putText(image, 
-            std::to_string(tracklet.track_id), 
+            "class_id: " + std::to_string(tracklet.class_id) + ", track_id: " + std::to_string(tracklet.track_id), 
             textLocation, 
             cv::FONT_HERSHEY_SIMPLEX, 
             0.5, 

@@ -6,10 +6,9 @@
 #include "BYTETracker.h"
 #include "test_utils.h"
 
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (argc < 3) 
+    if (argc < 3)
     {
         std::cout << "Please provide the required arguments: video_path, labels_path, output_path." << std::endl;
         std::cout << "  video_path   : Input video path." << std::endl;
@@ -18,16 +17,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const char* video_path = argv[1];
-    const char* labels_path = argv[2];
+    const char *video_path = argv[1];
+    const char *labels_path = argv[2];
     const std::string output_path = argv[3];
 
     // Initialize video capture
     cv::VideoCapture cap(video_path);
-    if ( !cap.isOpened() ) return 1;
+    if (!cap.isOpened())
+        return 1;
     // Input video information
     int img_w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-	int img_h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    int img_h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     int fps = cap.get(cv::CAP_PROP_FPS);
     long nFrame = static_cast<long>(cap.get(cv::CAP_PROP_FRAME_COUNT));
 
@@ -39,10 +39,9 @@ int main(int argc, char* argv[])
     }
     cv::VideoWriter writer(
         output_video_path,
-        cv::VideoWriter::fourcc('M','J','P','G'), 
-        fps, 
-        cv::Size(img_w, img_h)
-    );
+        cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
+        fps,
+        cv::Size(img_w, img_h));
 
     // Initialize tracker
     BYTETracker tracker(60, 0.3, 0.1, 0.5, 0.8);
@@ -56,7 +55,8 @@ int main(int argc, char* argv[])
     while (true)
     {
         // Read frame
-        if(!cap.read(frame)) break;
+        if (!cap.read(frame))
+            break;
         outputFrame = frame;
 
         // Read and process model predictions
