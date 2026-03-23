@@ -83,8 +83,9 @@ int main(int argc, char *argv[])
             // Tracking
             tracker.update(objects, lostTracklets, tracklets);
 
-            std::cout << "Tracklets: " << tracklets.size() << std::endl;
-            std::cout << "lostTracklets: " << lostTracklets.size() << std::endl;
+            std::cout << "objects size: " << objects.size() << std::endl;
+            std::cout << "Tracklets size: " << tracklets.size() << std::endl;
+            std::cout << "lostTracklets size: " << lostTracklets.size() << std::endl;
 
             // Draw boxes
             drawTracklets(outputFrame, tracklets);
@@ -96,6 +97,8 @@ int main(int argc, char *argv[])
 
         // Write output frame
         writer.write(outputFrame);
+
+        std::cout << std::endl;
 
         frame_idx++;
     }

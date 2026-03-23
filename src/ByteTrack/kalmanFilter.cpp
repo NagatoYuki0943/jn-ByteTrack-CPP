@@ -47,13 +47,27 @@ namespace byte_kalman
         }
 
         KAL_MEAN std;
+        // x_center    2 × w_pos × h    x 中心位置不确定性
         std(0) = 2 * _std_weight_position * measurement[3];
+        // y_center
+        // y_center    2 × w_pos × h    y 中心位置不确定性
         std(1) = 2 * _std_weight_position * measurement[3];
-        std(2) = 1e-2;
+        // aspect_ratio    0.1         宽高比不确定性
+        // std(2) = 1e-2;
+        std(2) = 0.1;
+        // height    2 × w_pos × h    高度不确定性
         std(3) = 2 * _std_weight_position * measurement[3];
+        // vx    10 × w_vel × h    x 速度不确定性
         std(4) = 10 * _std_weight_velocity * measurement[3];
+        // vy    10 × w_vel × h    y 速度不确定性
         std(5) = 10 * _std_weight_velocity * measurement[3];
-        std(6) = 1e-5;
+        // v_aspect_ratio    1e-5    宽高比变化率不确定性
+        // std(6) = 1e-5;
+        // std(6) = 0.001;
+        std(6) = 0.005;
+        // std(6) = 0.01;
+        // std(6) = 0.1 * _std_weight_velocity * measurement[3];
+        // v_height    10 × w_vel × h    高度变化率不确定性
         std(7) = 10 * _std_weight_velocity * measurement[3];
 
         KAL_MEAN tmp = std.array().square();
