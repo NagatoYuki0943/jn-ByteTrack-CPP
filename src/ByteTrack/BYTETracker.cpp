@@ -47,9 +47,10 @@ void BYTETracker::update(const std::vector<Object> &objects, std::vector<STrack>
 			tlbr_[3] = objects[i].rect.y + objects[i].rect.height;
 
 			float score = objects[i].prob;
-			int class_id = objects[i].label;
+			int class_id = objects[i].class_id;
+			int target_id = objects[i].target_id;
 
-			STrack strack(STrack::tlbr_to_tlwh(tlbr_), score, class_id);
+			STrack strack(STrack::tlbr_to_tlwh(tlbr_), score, class_id, target_id);
 			if (score >= track_high_thresh)
 			{
 				detections.push_back(strack);

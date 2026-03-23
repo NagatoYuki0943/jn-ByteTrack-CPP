@@ -6,9 +6,10 @@
 
 struct Object
 {
-	cv::Rect_<float> rect;
-	int label;
+	int target_id;
+	int class_id;
 	float prob;
+	cv::Rect_<float> rect;
 };
 
 class BYTETracker

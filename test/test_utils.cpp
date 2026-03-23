@@ -30,6 +30,7 @@ void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std
     }
 
     std::string line;
+    int line_id = 0;
     while (std::getline(file, line))
     {
         std::istringstream ss(line);
@@ -44,10 +45,12 @@ void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std
         float h = height * imgHeight;
 
         Object obj;
-        obj.label = class_id;
+        obj.target_id = line_id;
+        obj.class_id = class_id;
         obj.prob = conf;
         obj.rect = cv::Rect_<float>(x, y, w, h);
         objects.push_back(obj);
+        line_id += 1;
     }
 }
 

@@ -1,6 +1,6 @@
 #include "STrack.h"
 
-STrack::STrack(std::vector<float> tlwh_, float score, int class_id)
+STrack::STrack(std::vector<float> tlwh_, float score, int class_id, int target_id)
 {
 	_tlwh.resize(4);
 	_tlwh.assign(tlwh_.begin(), tlwh_.end());
@@ -18,6 +18,7 @@ STrack::STrack(std::vector<float> tlwh_, float score, int class_id)
 	tracklet_len = 0;
 	this->score = score;
 	this->class_id = class_id;
+	this->target_id = target_id;
 	start_frame = 0;
 }
 
