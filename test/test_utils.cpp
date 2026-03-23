@@ -20,7 +20,7 @@ std::vector<std::string> classes{
     "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase",
     "scissors", "teddy bear", "hair drier", "toothbrush"};
 
-void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std::vector<Object> &objects)
+void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std::vector<ByteTrack::Object> &objects)
 {
     std::ifstream file(path);
     if (!file.is_open())
@@ -44,7 +44,7 @@ void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std
         float w = width * imgWidth;
         float h = height * imgHeight;
 
-        Object obj;
+        ByteTrack::Object obj;
         obj.target_id = line_id;
         obj.class_id = class_id;
         obj.prob = conf;
@@ -54,9 +54,9 @@ void readYoloLabelFile(const std::string &path, int imgWidth, int imgHeight, std
     }
 }
 
-void drawTracklets(cv::Mat &image, const std::vector<STrack> &tracklets)
+void drawTracklets(cv::Mat &image, const std::vector<ByteTrack::STrack> &tracklets)
 {
-    for (const STrack &tracklet : tracklets)
+    for (const ByteTrack::STrack &tracklet : tracklets)
     {
         cv::Rect box(
             static_cast<int>(tracklet.tlwh[0]),

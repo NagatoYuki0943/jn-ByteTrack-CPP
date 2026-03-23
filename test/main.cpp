@@ -54,10 +54,10 @@ int main(int argc, char *argv[])
         cv::Size(img_w, img_h));
 
     // Initialize tracker
-    BYTETracker tracker(60, 0.3, 0.1, 0.5, 0.8);
-    std::vector<Object> objects;
-    std::vector<STrack> tracklets;
-    std::vector<STrack> lostTracklets;
+    ByteTrack::BYTETracker tracker(60, 0.3, 0.1, 0.5, 0.8);
+    std::vector<ByteTrack::Object> objects;
+    std::vector<ByteTrack::STrack> tracklets;
+    std::vector<ByteTrack::STrack> lostTracklets;
 
     int frame_idx = 1;
     cv::Mat frame;
