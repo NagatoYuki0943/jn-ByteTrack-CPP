@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
     std::vector<ByteTrack::Object> objects;
     std::vector<ByteTrack::STrack> tracklets;
     std::vector<ByteTrack::STrack> lostTracklets;
+    std::vector<ByteTrack::STrack> removedTracklets;
 
     int frame_idx = 1;
     cv::Mat frame;
@@ -96,11 +97,12 @@ int main(int argc, char *argv[])
             readYoloLabelFile(labelFile.string(), img_w, img_h, objects);
 
             // Tracking
-            tracker.update(objects, lostTracklets, tracklets);
+            tracker.update(objects, tracklets, lostTracklets, removedTracklets);
 
             std::cout << "objects size: " << objects.size() << std::endl;
             std::cout << "Tracklets size: " << tracklets.size() << std::endl;
             std::cout << "lostTracklets size: " << lostTracklets.size() << std::endl;
+            std::cout << "removedTracklets size: " << removedTracklets.size() << std::endl;
 
             // Draw boxes
             drawTracklets(outputFrame, tracklets);
