@@ -37,8 +37,25 @@ namespace ByteTrack
         std::vector<STrack> detections;        // 高分检测框集合 (得分 >= track_high_thresh)
         std::vector<STrack> detections_low;    // 低分检测框集合 (得分在 track_low_thresh 和 track_high_thresh 之间)
 
+        // detections_cp (cp 代表 copy / 备份)
+        //     存储内容： 第一轮匹配（高分框匹配）结束后，没有被任何老轨迹认领的剩余“高分检测框”。
+        // 存储原因:
+        //     在 ByteTrack 的精髓——“第二轮低分框遮挡匹配”开始前，代码需要把 detections 变量清空，并塞满低分框。为了防止那些珍贵的剩余高分框被洗掉，代码先用 detections_cp 把它们“暂存备份”起来。
+        //     等第二轮匹配结束，代码会把 detections_cp 里的高分框重新拿出来，用于两个目的：
+        //         1. 看看能不能和“未确认 (Unconfirmed)”的轨迹匹配上（转正考核）。
+        //         2. 如果还匹配不上，就正式用它们来初始化全新的追踪目标（发新 ID）。
         std::vector<STrack> detections_cp;
+        // tracked_stracks_swap (swap 代表交换/筛选)
+        //     存储内容： 经过本帧所有匹配逻辑后，状态依然是 Tracked（稳定追踪）的活跃轨迹。
+        // 存储原因:
+        //     在匹配过程中，原本在 tracked_stracks 列表里的一些轨迹可能因为没匹配上，被标记成了 Lost（丢失）。C++ 的 std::vector 在遍历时直接删除元素（erase）不仅效率低，而且容易引发迭代器失效的 Bug。
+        //     所以作者用了一个非常安全的做法：拿一个空篮子 tracked_stracks_swap，把确定还活着的轨迹（state == TrackState::Tracked）一个个挑出来放进去。挑完之后，把原来的老列表清空，再把篮子里的内容整体倒回去。相当于做了一次安全的无痛清洗。
         std::vector<STrack> tracked_stracks_swap;
+        // 存储内容： resa 存储的是去重后的活跃轨迹 (Tracked)，resb 存储的是去重后的丢失轨迹 (Lost)。
+        // 存储原因:
+        //     在算法的最后一步（Step 5），调用了一个函数：remove_duplicate_stracks(resa, resb, this->tracked_stracks, this->lost_stracks);。
+        //     由于卡尔曼滤波和目标交汇等原因，追踪器可能会出现一个 Bug：为同一个物理目标生成了两条极其相似的轨迹（比如两条轨迹的框 IoU 高达 0.95）。
+        //     这个函数的作用就是对比清理这些重复轨迹。因为不能在原数组上边对比边删除，所以函数将清理干净的 Tracked 轨迹输出到 resa 中，将清理干净的 Lost 轨迹输出到 resb 中。最后，代码将原数组清空，并被这俩干净的结果覆盖。
         std::vector<STrack> resa, resb;
 
         std::vector<STrack *> unconfirmed;       // 未确认的轨迹（通常是上一帧刚生成，还未稳定追踪的轨迹）
