@@ -57,21 +57,25 @@ namespace ByteTrack
         this->tracklet_len = 0;
         this->state = TrackState::Tracked;
 
+        this->_hits = 1;            // 初始命中次数为 1
+        this->track_id = 0;         // 此时还不分配 ID
+        this->is_activated = false; // 默认不激活
+
         // 【解决id增长过快修改点】：判断是否为第一帧
         // if (frame_id == 1)
         // {
         //     this->is_activated = true;
         // }
-        if (frame_id == 1)
-        {
-            this->is_activated = true;
-            this->track_id = this->next_id(); // 只有第一帧的框直接转正，发身份证
-        }
-        else
-        {
-            this->is_activated = false; // 其他帧的新框，进入考察期
-            this->track_id = 0;         // 分配一个无效的占位 ID
-        }
+        // if (frame_id == 1)
+        // {
+        //     this->is_activated = true;
+        //     this->track_id = this->next_id(); // 只有第一帧的框直接转正，发身份证
+        // }
+        // else
+        // {
+        //     this->is_activated = false; // 其他帧的新框，进入考察期
+        //     this->track_id = 0;         // 分配一个无效的占位 ID
+        // }
 
         this->frame_id = frame_id;
         this->start_frame = frame_id;
@@ -104,10 +108,11 @@ namespace ByteTrack
             this->track_id = next_id();
     }
 
-    void STrack::update(STrack &new_track, int frame_id)
+    void STrack::update(STrack &new_track, int frame_id, int min_hits)
     {
         this->frame_id = frame_id;
         this->tracklet_len++;
+        this->_hits++; // 每匹配到一次，计数加 1
 
         std::vector<float> xyah = tlwh_to_xyah(new_track.tlwh);
         DETECTBOX xyah_box;
@@ -127,7 +132,8 @@ namespace ByteTrack
 
         // 【解决id增长过快修改点】：如果是从“未激活”状态变为“激活”状态，此时才分配全局唯一 ID
         // this->is_activated = true;
-        if (!this->is_activated)
+        // 只有达到命中阈值，才分配 ID 并激活
+        if (!this->is_activated && this->_hits >= min_hits)
         {
             this->track_id = this->next_id(); // 考察期通过，正式发身份证
             this->is_activated = true;

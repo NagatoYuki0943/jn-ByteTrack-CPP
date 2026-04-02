@@ -64,12 +64,15 @@ int main(int argc, char *argv[])
     float new_track_thresh = 0.5;
     // match_thresh 认亲标准，判定检测框与已有轨迹“是否为同一目标”的匹配代价容忍度（通常基于 IoU）。
     float match_thresh = 0.8;
+    // min_hits 连续追踪到多少帧才输出
+    int min_hits = 3;
     ByteTrack::BYTETracker tracker(
         max_time_lost,
         track_high_thresh,
         track_low_thresh,
         new_track_thresh,
-        match_thresh);
+        match_thresh,
+        min_hits);
     std::vector<ByteTrack::Object> objects;
     std::vector<ByteTrack::STrack> tracklets;
     std::vector<ByteTrack::STrack> lostTracklets;

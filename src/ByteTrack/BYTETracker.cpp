@@ -4,15 +4,22 @@
 namespace ByteTrack
 {
 
-    BYTETracker::BYTETracker(int max_time_lost, float track_high_thresh, float track_low_thresh, float new_track_thresh, float match_thresh)
+    BYTETracker::BYTETracker(
+        int max_time_lost,
+        float track_high_thresh,
+        float track_low_thresh,
+        float new_track_thresh,
+        float match_thresh,
+        int min_hits)
     {
-        set_max_time_lost(max_time_lost);
-        set_track_high_thresh(track_high_thresh);
-        set_track_low_thresh(track_low_thresh);
-        set_new_track_thresh(new_track_thresh);
-        set_match_thresh(match_thresh);
+        this->max_time_lost = max_time_lost;
+        this->track_high_thresh = track_high_thresh;
+        this->track_low_thresh = track_low_thresh;
+        this->new_track_thresh = new_track_thresh;
+        this->match_thresh = match_thresh;
+        this->min_hits = min_hits;
 
-        frame_id = 0;
+        this->frame_id = 0;
     }
 
     BYTETracker::~BYTETracker()
@@ -26,8 +33,7 @@ namespace ByteTrack
         // 临时丢失的轨迹
         std::vector<STrack> &lost_stracks,
         // 需要被永久删除的轨迹
-        std::vector<STrack> &removed_stracks
-    )
+        std::vector<STrack> &removed_stracks)
     {
         ////////////////// Step 1: Get detections (获取并划分当前帧的检测结果) //////////////////
         this->frame_id++; // 帧计数器递增
@@ -126,7 +132,7 @@ namespace ByteTrack
             if (track->state == TrackState::Tracked)
             {
                 // 稳定轨迹正常更新状态
-                track->update(*det, this->frame_id);
+                track->update(*det, this->frame_id, this->min_hits);
                 activated_stracks.push_back(*track);
             }
             else
@@ -173,7 +179,7 @@ namespace ByteTrack
             STrack *det = &detections[matches[i][1]];
             if (track->state == TrackState::Tracked)
             {
-                track->update(*det, this->frame_id);
+                track->update(*det, this->frame_id, this->min_hits);
                 activated_stracks.push_back(*track);
             }
             else
@@ -211,7 +217,7 @@ namespace ByteTrack
         for (int i = 0; i < matches.size(); i++)
         {
             // 匹配成功，更新状态，此时轨迹内部的 is_activated 会变成 true
-            unconfirmed[matches[i][0]]->update(detections[matches[i][1]], this->frame_id);
+            unconfirmed[matches[i][0]]->update(detections[matches[i][1]], this->frame_id, this->min_hits);
             activated_stracks.push_back(*unconfirmed[matches[i][0]]);
         }
 

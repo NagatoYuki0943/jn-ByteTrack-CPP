@@ -36,7 +36,7 @@ namespace ByteTrack
 
         void activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id);
         void re_activate(STrack &new_track, int frame_id, bool new_id = false);
-        void update(STrack &new_track, int frame_id);
+        void update(STrack &new_track, int frame_id, int min_hits);
         cv::Scalar get_color() const;
 
     public:
@@ -58,6 +58,7 @@ namespace ByteTrack
         int target_id;
 
     private:
+        int _hits = 0; // 记录该目标累积匹配成功的次数
         byte_kalman::KalmanFilter kalman_filter;
     };
 

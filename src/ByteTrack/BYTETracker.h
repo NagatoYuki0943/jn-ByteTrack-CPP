@@ -18,7 +18,13 @@ namespace ByteTrack
     class BYTETracker
     {
     public:
-        BYTETracker(int max_time_lost = 15, float track_high_thresh = 0.5, float track_low_thresh = 0.1, float new_track_thresh = 0.6, float match_thresh = 0.8);
+        BYTETracker(
+            int max_time_lost = 15,
+            float track_high_thresh = 0.5,
+            float track_low_thresh = 0.1,
+            float new_track_thresh = 0.6,
+            float match_thresh = 0.8,
+            int min_hits = 0);
         ~BYTETracker();
 
         void update(
@@ -30,12 +36,6 @@ namespace ByteTrack
             // 需要被永久删除的轨迹
             std::vector<STrack> &removed_stracks
         );
-
-        void set_max_time_lost(int val) { max_time_lost = val; };
-        void set_track_high_thresh(float thresh) { track_high_thresh = thresh; };
-        void set_track_low_thresh(float thresh) { track_low_thresh = thresh; };
-        void set_new_track_thresh(float thresh) { new_track_thresh = thresh; };
-        void set_match_thresh(float thresh) { match_thresh = thresh; };
 
     private:
         std::vector<STrack *> joint_stracks(std::vector<STrack *> &tlista, std::vector<STrack> &tlistb);
@@ -54,13 +54,14 @@ namespace ByteTrack
                      bool extend_cost = false, float cost_limit = LONG_MAX, bool return_cost = true);
 
     private:
+        int max_time_lost; // Number of frames allowable to go missing
         float track_high_thresh;
         float track_low_thresh;
         float new_track_thresh;
         float match_thresh;
+        int min_hits; // 只有连续检测到 N 帧才输出
 
         int frame_id;
-        int max_time_lost; // Number of frames allowable to go missing
 
         std::vector<STrack> tracked_stracks;
         std::vector<STrack> lost_stracks;
