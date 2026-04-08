@@ -65,7 +65,7 @@ namespace ByteTrack
 
         std::vector<STrack> tracked_stracks;
         std::vector<STrack> lost_stracks;
-        std::vector<STrack> removed_stracks;
+        std::vector<STrack> removed_stracks; // 无用变量
         byte_kalman::KalmanFilter kalman_filter;
     };
 

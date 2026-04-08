@@ -37,6 +37,11 @@ namespace ByteTrack
     {
         ////////////////// Step 1: Get detections (获取并划分当前帧的检测结果) //////////////////
         this->frame_id++; // 帧计数器递增
+
+        // 用于记录本帧变化的局部变量，避免与类成员变量 this->lost_stracks 和 this->removed_stracks 冲突
+        std::vector<STrack> frame_lost_stracks;    // 本帧新丢失的目标
+        std::vector<STrack> frame_removed_stracks; // 本帧被抹杀的目标
+
         // 定义不同状态的轨迹集合，用于后续更新状态机
         std::vector<STrack> activated_stracks; // 成功匹配并更新的活跃轨迹
         std::vector<STrack> refind_stracks;    // 从 Lost 状态重新找回的轨迹
@@ -51,12 +56,14 @@ namespace ByteTrack
         //         1. 看看能不能和“未确认 (Unconfirmed)”的轨迹匹配上（转正考核）。
         //         2. 如果还匹配不上，就正式用它们来初始化全新的追踪目标（发新 ID）。
         std::vector<STrack> detections_cp;
+
         // tracked_stracks_swap (swap 代表交换/筛选)
         //     存储内容： 经过本帧所有匹配逻辑后，状态依然是 Tracked（稳定追踪）的活跃轨迹。
         // 存储原因:
         //     在匹配过程中，原本在 tracked_stracks 列表里的一些轨迹可能因为没匹配上，被标记成了 Lost（丢失）。C++ 的 std::vector 在遍历时直接删除元素（erase）不仅效率低，而且容易引发迭代器失效的 Bug。
         //     所以作者用了一个非常安全的做法：拿一个空篮子 tracked_stracks_swap，把确定还活着的轨迹（state == TrackState::Tracked）一个个挑出来放进去。挑完之后，把原来的老列表清空，再把篮子里的内容整体倒回去。相当于做了一次安全的无痛清洗。
         std::vector<STrack> tracked_stracks_swap;
+
         // 存储内容： resa 存储的是去重后的活跃轨迹 (Tracked)，resb 存储的是去重后的丢失轨迹 (Lost)。
         // 存储原因:
         //     在算法的最后一步（Step 5），调用了一个函数：remove_duplicate_stracks(resa, resb, this->tracked_stracks, this->lost_stracks);。
@@ -204,7 +211,8 @@ namespace ByteTrack
             if (track->state != TrackState::Lost)
             {
                 track->mark_lost();
-                lost_stracks.push_back(*track);
+                // 将本帧走失的目标推入局部变量，而不是直接污染类成员 this->lost_stracks
+                frame_lost_stracks.push_back(*track);
             }
         }
 
@@ -238,7 +246,8 @@ namespace ByteTrack
             // 没匹配上的未确认轨迹，说明上一帧很可能是个误检，直接永久标记为 Removed 抹杀掉
             STrack *track = unconfirmed[u_unconfirmed[i]];
             track->mark_removed();
-            removed_stracks.push_back(*track);
+            // 推入局部变量，收集本帧被死掉的新员工
+            frame_removed_stracks.push_back(*track);
         }
 
         // 对于到了最后依然没有被任何历史轨迹认领的高分检测框，将其视为新目标的出现
@@ -259,7 +268,8 @@ namespace ByteTrack
             if (this->frame_id - this->lost_stracks[i].end_frame() > this->max_time_lost)
             {
                 this->lost_stracks[i].mark_removed();
-                removed_stracks.push_back(this->lost_stracks[i]);
+                // 推入局部变量，收集本帧因为超时而死掉的老员工
+                frame_removed_stracks.push_back(this->lost_stracks[i]);
             }
         }
 
@@ -278,18 +288,17 @@ namespace ByteTrack
         this->tracked_stracks = joint_stracks(this->tracked_stracks, activated_stracks);
         this->tracked_stracks = joint_stracks(this->tracked_stracks, refind_stracks);
 
-        // 5.3 从全局 lost_stracks 列表中剔除掉那些刚才被找回(Tracked)或被删除(Removed)的轨迹
+        // 5.3 从全局 lost 列表中，剔除掉本帧又被找回来 (Tracked) 的目标
         this->lost_stracks = sub_stracks(this->lost_stracks, this->tracked_stracks);
-        for (int i = 0; i < lost_stracks.size(); i++)
+
+        // 把本帧新【丢失】的目标，合并进类成员的全局 lost 列表
+        for (int i = 0; i < frame_lost_stracks.size(); i++)
         {
-            this->lost_stracks.push_back(lost_stracks[i]); // 加上本帧新标记为 lost 的轨迹
+            this->lost_stracks.push_back(frame_lost_stracks[i]);
         }
 
-        this->lost_stracks = sub_stracks(this->lost_stracks, this->removed_stracks);
-        for (int i = 0; i < removed_stracks.size(); i++)
-        {
-            this->removed_stracks.push_back(removed_stracks[i]);
-        }
+        // 从全局 lost 列表中，彻底剔除掉本帧被【抹杀】的目标
+        this->lost_stracks = sub_stracks(this->lost_stracks, frame_removed_stracks);
 
         // 5.4 剔除可能存在的重复轨迹 (通常基于 IoU 去重，防止同一个目标产生了多条轨迹)
         remove_duplicate_stracks(resa, resb, this->tracked_stracks, this->lost_stracks);
@@ -299,7 +308,8 @@ namespace ByteTrack
         this->lost_stracks.clear();
         this->lost_stracks.assign(resb.begin(), resb.end());
 
-        // 5.5 组装最终要输出给外部的结果
+        // 5.5 组装最终要输出给外部参数的结果
+        output_stracks.clear(); // 清理可能残留的数据
         for (int i = 0; i < this->tracked_stracks.size(); i++)
         {
             // 只有“已激活/已确认”的轨迹才能输出给前端，过滤掉“一闪而过”的幽灵误检框
@@ -309,12 +319,9 @@ namespace ByteTrack
             }
         }
 
-        // 更新函数外部传入的 lost_stracks 引用，便于外部调用者可能需要的统计逻辑
-        lost_stracks.clear();
-        for (int i = 0; i < this->lost_stracks.size(); i++)
-        {
-            lost_stracks.push_back(this->lost_stracks[i]);
-        }
+        // 将类成员里干净的全局状态，或者本帧死亡名单，直接拷贝给外部引用参数
+        lost_stracks = this->lost_stracks;
+        removed_stracks = frame_removed_stracks;
     }
 
 }
