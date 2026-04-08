@@ -108,6 +108,10 @@ namespace ByteTrack
         }
 
         ////////////////// Step 2: First association, with IoU (第一轮匹配：高分框匹配) //////////////////
+        // 第一步：主力部队对决（常规高分匹配）
+        //   谁参与： 所有的老员工（稳定追踪的 Tracked + 暂时丢失的 Lost） VS 当前帧的高分检测框。
+        //   目的是什么： 这是最符合直觉的一步。既然目标很清晰，历史轨迹也在，那就优先把最优质的检测结果分配给它们。
+        //   遗留问题： 肯定会有一些老员工因为被遮挡，没匹配上高分框；也会有一些高分框，因为是新走进画面的目标，没有老员工去认领它。
         // 2.1 将稳定追踪的轨迹和丢失(Lost)的轨迹合并，作为第一轮匹配的目标池
         strack_pool = joint_stracks(tracked_stracks, this->lost_stracks);
 
@@ -144,6 +148,10 @@ namespace ByteTrack
         }
 
         ////////////////// Step 3: Second association, using low score dets (第二轮匹配：ByteTrack核心，低分框匹配遮挡目标) //////////////////
+        // 第二步：遮挡挽救（ByteTrack 的灵魂）
+        //   谁参与： 第一步里没匹配上的稳定追踪轨迹（注意：不再带 Lost 玩了） VS 当前帧的低分检测框。
+        //   目的是什么： 一个人突然在第一步没匹配上，最大的可能是他被树或者车挡住了，导致 YOLO 检测分数暴跌。
+        //   这时候，赶紧去“低分框”的垃圾堆里翻一翻，看看有没有能和他历史轨迹对得上的残影。如果能对上，成功挽救，目标不会断流！
         // 3.1 备份第一轮未匹配的高分框 (留给后面去匹配 unconfirmed 轨迹，或生成新轨迹)
         for (int i = 0; i < u_detection.size(); i++)
         {
@@ -200,7 +208,11 @@ namespace ByteTrack
             }
         }
 
-        // Deal with unconfirmed tracks, usually tracks with only one beginning frame
+        ////////////////// Step 4: Init new stracks (初始化新轨迹) //////////////////
+        // 第三步：新员工试用期考核（未确认轨迹匹配）
+        //   谁参与： 上一帧刚冒出来、还在试用期的未确认轨迹 (Unconfirmed) VS 第一步里挑剩下的高分检测框。
+        //   目的是什么： 对于上一帧刚出现的新目标，我们要在这一帧考核它是不是噪点。如果它在这一帧还能匹配上一个没人要的高分框，说明它是实体，考核通过（hits 增加）；如果匹配不上，当场开除（Removed）。
+        // 4.1 Deal with unconfirmed tracks, usually tracks with only one beginning frame
         // 处理未确认的轨迹 (通常是上一帧刚产生的新轨迹)
         detections.clear();
         detections.assign(detections_cp.begin(), detections_cp.end()); // 拿出刚才备份的、第一轮没用掉的“高分框”
@@ -229,7 +241,6 @@ namespace ByteTrack
             removed_stracks.push_back(*track);
         }
 
-        ////////////////// Step 4: Init new stracks (初始化新轨迹) //////////////////
         // 对于到了最后依然没有被任何历史轨迹认领的高分检测框，将其视为新目标的出现
         for (int i = 0; i < u_detection.size(); i++)
         {
