@@ -1,6 +1,5 @@
 #include "BYTETracker.h"
 #include "lapjv.h"
-#include <cstdint>
 
 namespace ByteTrack
 {
