@@ -18,6 +18,26 @@ namespace ByteTrack
     class BYTETracker
     {
     public:
+        // 死亡倒计时，目标丢失（未匹配到检测框）后，在内存中保留等待重新出现的总帧数
+        int max_time_lost;
+        // 高分界线，得分大于此值的框为“高分框”，参与第一轮常规匹配。
+        float track_high_thresh;
+        // 低分界线，得分在此值与高分界线之间的为“低分框”，参与第二轮遮挡修补；低于此值的框直接丢弃。
+        float track_low_thresh;
+        // 出生门槛，只有得分大于此值的检测框，才能被初始化为全新的追踪目标。
+        float new_track_thresh;
+        // match_thresh 认亲标准，判定检测框与已有轨迹“是否为同一目标”的匹配代价容忍度（通常基于 IoU）。越高，越容易匹配；越低，越难匹配。
+        //  什么时候应该调高（比如 0.8 ~ 0.9）？
+        //      视频帧率（FPS）较低时。
+        //      目标运动速度极快时。
+        //      原因： 这种情况下，目标在相邻两帧之间的位移跨度很大，导致上一帧的预测框和这一帧的检测框交集 (IoU) 很小。如果不把容忍度调高，追踪器会认为老目标消失了，新目标出现了，导致疯狂闪烁和切换 ID。
+        //  什么时候应该调低（比如 0.4 ~ 0.5）？
+        //      画面极其拥挤密集时（例如密集的车流、十字路口的人群）。
+        //      原因： 当多个目标靠得非常近时，如果追踪器太宽容，很容易发生 ID 劫持（比如 A 车和 B 车并排，追踪器把 A 的 ID 错误地连到了 B 的检测框上）。降低阈值能逼迫追踪器变得“严谨”，只认准那个跟历史轨迹重合度最高的目标。
+        float match_thresh;
+        // 只有连续检测到 N 帧才输出
+        int min_hits;
+
         BYTETracker(
             int max_time_lost = 15,
             float track_high_thresh = 0.5,
@@ -34,10 +54,16 @@ namespace ByteTrack
             // 临时丢失的轨迹
             std::vector<STrack> &lost_stracks,
             // 需要被永久删除的轨迹
-            std::vector<STrack> &removed_stracks
-        );
+            std::vector<STrack> &removed_stracks);
 
     private:
+        int frame_id;
+
+        std::vector<STrack> tracked_stracks;
+        std::vector<STrack> lost_stracks;
+        std::vector<STrack> removed_stracks; // 无用变量
+        byte_kalman::KalmanFilter kalman_filter;
+
         std::vector<STrack *> joint_stracks(std::vector<STrack *> &tlista, std::vector<STrack> &tlistb);
         std::vector<STrack> joint_stracks(std::vector<STrack> &tlista, std::vector<STrack> &tlistb);
 
@@ -52,21 +78,6 @@ namespace ByteTrack
 
         double lapjv(const std::vector<std::vector<float>> &cost, std::vector<int> &rowsol, std::vector<int> &colsol,
                      bool extend_cost = false, float cost_limit = LONG_MAX, bool return_cost = true);
-
-        int max_time_lost; // Number of frames allowable to go missing
-        float track_high_thresh;
-        float track_low_thresh;
-        float new_track_thresh;
-        float match_thresh;
-        int min_hits; // 只有连续检测到 N 帧才输出
-
-    private:
-        int frame_id;
-
-        std::vector<STrack> tracked_stracks;
-        std::vector<STrack> lost_stracks;
-        std::vector<STrack> removed_stracks; // 无用变量
-        byte_kalman::KalmanFilter kalman_filter;
     };
 
 }
