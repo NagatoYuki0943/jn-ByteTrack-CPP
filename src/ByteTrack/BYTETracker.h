@@ -51,7 +51,9 @@ namespace ByteTrack
             float match_thresh = 0.8,
             float low_match_thresh = 0.5,
             float unconfirmed_match_thresh = 0.8,
-            int min_hits = 0);
+            int min_hits = 0,
+            float std_weight_position = 1. / 20,
+            float std_weight_velocity = 1. / 10);
         ~BYTETracker();
 
         void update(

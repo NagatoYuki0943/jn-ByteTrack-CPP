@@ -12,7 +12,9 @@ namespace ByteTrack
         float match_thresh,
         float low_match_thresh,
         float unconfirmed_match_thresh,
-        int min_hits)
+        int min_hits,
+        float std_weight_position,
+        float std_weight_velocity)
     {
         this->max_time_lost = max_time_lost;
         this->track_high_thresh = track_high_thresh;
@@ -24,6 +26,11 @@ namespace ByteTrack
         this->min_hits = min_hits;
 
         this->frame_id = 0;
+
+        this->kalman_filter = byte_kalman::KalmanFilter(
+            std_weight_position,
+            std_weight_velocity
+        );
     }
 
     BYTETracker::~BYTETracker()

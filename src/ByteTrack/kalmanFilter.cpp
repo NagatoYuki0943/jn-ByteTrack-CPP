@@ -14,7 +14,10 @@ namespace byte_kalman
         14.067,
         15.507,
         16.919};
-    KalmanFilter::KalmanFilter()
+    KalmanFilter::KalmanFilter(
+        float std_weight_position,
+        float std_weight_velocity
+    )
     {
         int ndim = 4;
         double dt = 1.;
@@ -26,8 +29,8 @@ namespace byte_kalman
         }
         this->_update_mat = Eigen::MatrixXf::Identity(4, 8);
 
-        this->_std_weight_position = 1. / 20;
-        this->_std_weight_velocity = 1. / 10;
+        this->_std_weight_position = std_weight_position;
+        this->_std_weight_velocity = std_weight_velocity;
     }
 
     KAL_DATA KalmanFilter::initiate(const DETECTBOX &measurement)

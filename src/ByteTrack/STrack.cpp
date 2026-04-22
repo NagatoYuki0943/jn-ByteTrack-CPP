@@ -23,6 +23,8 @@ namespace ByteTrack
         this->class_id = class_id;
         this->target_id = target_id;
         this->start_frame = 0;
+
+        this->kalman_filter = byte_kalman::KalmanFilter();
     }
 
     STrack::~STrack()

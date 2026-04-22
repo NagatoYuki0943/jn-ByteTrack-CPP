@@ -10,7 +10,10 @@ namespace byte_kalman
     {
     public:
         static const double chi2inv95[10];
-        KalmanFilter();
+        KalmanFilter(
+            float std_weight_position = 1. / 20,
+            float std_weight_velocity = 1. / 10
+        );
         KAL_DATA initiate(const DETECTBOX &measurement);
         void predict(KAL_MEAN &mean, KAL_COVA &covariance);
         KAL_HDATA project(const KAL_MEAN &mean, const KAL_COVA &covariance);
