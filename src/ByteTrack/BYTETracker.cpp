@@ -9,7 +9,7 @@ namespace ByteTrack
         float track_high_thresh,
         float track_low_thresh,
         float new_track_thresh,
-        float match_thresh,
+        float high_match_thresh,
         float low_match_thresh,
         float unconfirmed_match_thresh,
         int min_hits,
@@ -20,7 +20,7 @@ namespace ByteTrack
         this->track_high_thresh = track_high_thresh;
         this->track_low_thresh = track_low_thresh;
         this->new_track_thresh = new_track_thresh;
-        this->match_thresh = match_thresh;
+        this->high_match_thresh = high_match_thresh;
         this->low_match_thresh = low_match_thresh;
         this->unconfirmed_match_thresh = unconfirmed_match_thresh;
         this->min_hits = min_hits;
@@ -144,7 +144,7 @@ namespace ByteTrack
         // 2.4 使用匈牙利算法 (Linear Assignment) 进行最优二分图匹配
         std::vector<std::vector<int>> matches;
         std::vector<int> u_track, u_detection; // u_track: 未匹配上的轨迹, u_detection: 未匹配上的高分框
-        this->linear_assignment(dists, dist_size, dist_size_size, this->match_thresh, matches, u_track, u_detection);
+        this->linear_assignment(dists, dist_size, dist_size_size, this->high_match_thresh, matches, u_track, u_detection);
 
         // 2.5 处理第一轮成功匹配的结果
         for (int i = 0; i < matches.size(); i++)
